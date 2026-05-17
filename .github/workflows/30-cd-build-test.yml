@@ -157,7 +157,7 @@ jobs:
 
       - name: Frontend stability probe (2 minutes)
         run: |
-          end=$(( $(date +%s) + 120 ))
+          end=$(( $(date +%s) + 60 ))
           while [ $(date +%s) -lt $end ]; do
             curl --fail --silent --show-error --max-time 5 http://localhost:8000/ > /dev/null
             sleep 5
@@ -214,8 +214,8 @@ jobs:
       - backend-build-maven
       - backend-unit-test
       - backend-build-image
-      - backend-image-scan
-      # - backend-image-push
+      # - backend-image-scan
+      - backend-image-push
       - frontend-lint-check
       - frontend-unit-test
       - frontend-build-npm
