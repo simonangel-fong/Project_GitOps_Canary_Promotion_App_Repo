@@ -29,6 +29,12 @@
 	</scm>
 	<properties>
 		<java.version>25</java.version>
+		<!-- TODO: remove when Spring Boot 4.0.7 ships with Tomcat >= 11.0.22.
+		     Pinned to patch CVE-2026-41293/41284/42498/43512/43513/43515. -->
+		<tomcat.version>11.0.22</tomcat.version>
+		<checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
+		<owasp-plugin.version>12.1.1</owasp-plugin.version>
+		<jacoco-plugin.version>0.8.13</jacoco-plugin.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -54,7 +60,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>3.6.0</version>
+				<version>${checkstyle-plugin.version}</version>
 				<configuration>
 					<configLocation>checkstyle.xml</configLocation>
 					<failsOnError>true</failsOnError>
@@ -63,26 +69,7 @@
 				<executions>
 					<execution>
 						<id>checkstyle</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
-			<!-- OWASP Dependency Check: scan for CVEs -->
-			<plugin>
-				<groupId>org.owasp</groupId>
-				<artifactId>dependency-check-maven</artifactId>
-				<version>12.1.1</version>
-				<configuration>
-					<failBuildOnCVSS>7</failBuildOnCVSS>  <!-- fail on HIGH (7+) and CRITICAL -->
-					<suppressionFile>dependency-check-suppressions.xml</suppressionFile>
-					<ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
-				</configuration>
-				<executions>
-					<execution>
+						<phase>verify</phase>
 						<goals>
 							<goal>check</goal>
 						</goals>
@@ -94,7 +81,7 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.13</version>
+				<version>${jacoco-plugin.version}</version>
 				<executions>
 					<execution>
 						<id>prepare-agent</id>
@@ -104,7 +91,7 @@
 					</execution>
 					<execution>
 						<id>coverage-check</id>
-						<phase>test</phase>
+						<phase>verify</phase>
 						<goals>
 							<goal>check</goal>
 						</goals>
@@ -126,13 +113,36 @@
 				</executions>
 			</plugin>
 
-			<plugin>
-				<groupId>org.owasp</groupId>
-				<artifactId>dependency-check-maven</artifactId>
-				<version>10.0.4</version>
-			</plugin>
-
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- OWASP Dependency Check: opt-in via `mvn verify -Psecurity`.
+		     Runs on main-branch CI; kept out of default builds to avoid NVD downloads locally. -->
+		<profile>
+			<id>security</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.owasp</groupId>
+						<artifactId>dependency-check-maven</artifactId>
+						<version>${owasp-plugin.version}</version>
+						<configuration>
+							<failBuildOnCVSS>7</failBuildOnCVSS>
+							<suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+							<ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
+						</configuration>
+						<executions>
+							<execution>
+								<goals>
+									<goal>check</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

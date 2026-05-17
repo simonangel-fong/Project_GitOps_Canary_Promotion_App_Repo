@@ -82,7 +82,7 @@
     - frontend-build-npm
     - frontend-build-image
   - parallel
-    - dependency-scan: skip now
+    - dependency-scan
     - ci-smoke-test: ci-test/docker-compose.yaml
     - backend-image-scan: use image built in preivous job
     - frontend-image-scan: use image built in preivous job

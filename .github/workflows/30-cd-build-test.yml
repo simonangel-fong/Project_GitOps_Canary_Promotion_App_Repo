@@ -15,6 +15,7 @@ concurrency:
 
 permissions:
   contents: read
+  security-events: write
 
 env:
   backend-dockerfile-path: backend
@@ -91,6 +92,16 @@ jobs:
           image-name: ${{ env.frontend-image-name }}
           image-tag: ${{ env.frontend-image-tag }}-${{ github.sha }}
           upload-artifact: "true"
+
+  # Backend Dependency Scan (OWASP)
+  backend-dependency-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: ./.github/actions/backend-dependency-scan
+        with:
+          nvd-api-key: ${{ secrets.NVD_API_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   # Backend Image Scan
   backend-image-scan:
@@ -175,6 +186,7 @@ jobs:
   backend-image-push:
     runs-on: ubuntu-latest
     needs:
+      - backend-dependency-scan
       - backend-image-scan
       - ci-smoke-test
       # - backend-build-image
@@ -213,6 +225,7 @@ jobs:
       - backend-lint-check
       - backend-build-maven
       - backend-unit-test
+      - backend-dependency-scan
       - backend-image-push
       - frontend-lint-check
       - frontend-unit-test

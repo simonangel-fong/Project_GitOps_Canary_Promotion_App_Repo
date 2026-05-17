@@ -22,6 +22,7 @@
     - [Step 4 — Create the Docker Image](#step-4--create-the-docker-image)
   - [Acceptance Criteria](#acceptance-criteria)
   - [Code Validation Check](#code-validation-check)
+  - [Local Check before pushing](#local-check-before-pushing)
 
 ---
 
@@ -243,4 +244,51 @@ docker compose down -v
 cd backend/
 docker build -t simonangelfong/gitops-demo-backend .
 docker push simonangelfong/gitops-demo-backend
+```
+
+## Local Check before pushing
+
+Run these from `backend/app/` in order. Stop at the first failure and fix it before pushing.
+
+```sh
+cd backend/app
+
+# 1. Clean old build artifacts (target/).
+mvn clean
+
+# 2. Compile the source — fastest way to catch syntax/type errors.
+mvn compile
+
+# 3. Run unit tests.
+mvn test
+
+# 4. Full verify: compile + test + checkstyle + jacoco coverage gate (70%).
+#    This is the closest local equivalent to what CI runs on PR.
+mvn verify
+
+# 5. Optional — security scan (slow, downloads NVD feed on first run).
+#    CI runs this on main; only run locally if you've touched dependencies.
+mvn -Psecurity dependency-check:check
+```
+
+Shortcuts:
+
+```sh
+# Skip tests when you only want to check the build compiles and packages.
+mvn verify -DskipTests
+
+# Parallel build across cores (faster on multi-module / large projects).
+mvn -T 1C verify
+```
+
+Also worth checking before pushing:
+
+```sh
+# Confirm nothing is staged that shouldn't be (secrets, target/, IDE files).
+git status
+git diff --staged
+
+# Rebase on latest main to catch merge conflicts locally, not in the PR.
+git fetch origin
+git rebase origin/main
 ```
