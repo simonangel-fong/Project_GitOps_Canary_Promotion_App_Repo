@@ -26,6 +26,9 @@ inputs:
   source-run-url:
     description: URL of the calling workflow run, included in the PR body for traceability.
     required: true
+  environment:
+    description: Target environment overlay; also the config repo branch the PR is opened against (e.g. dev, stage, prod).
+    required: true
 
 runs:
   using: composite
@@ -35,6 +38,7 @@ runs:
       with:
         repository: ${{ inputs.config-repo }}
         token: ${{ inputs.config-repo-token }}
+        ref: ${{ inputs.environment }}
         path: config-repo
 
     - name: Update kustomization and open PR
@@ -49,6 +53,7 @@ runs:
         RELEASE_TAG: ${{ inputs.release-tag }}
         SOURCE_RUN_URL: ${{ inputs.source-run-url }}
         CONFIG_REPO: ${{ inputs.config-repo }}
+        ENVIRONMENT: ${{ inputs.environment }}
       run: |
         set -euo pipefail
 
@@ -83,7 +88,7 @@ runs:
 
         gh pr create \
           --repo "$CONFIG_REPO" \
-          --base main \
+          --base "$ENVIRONMENT" \
           --head "$branch" \
           --title "release(${COMPONENT}): ${RELEASE_TAG}" \
           --body "Bump \`${IMAGE_KUSTOMIZE_NAME}\` newTag to \`${NEW_TAG}\`.
