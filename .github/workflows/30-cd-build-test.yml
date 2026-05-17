@@ -225,7 +225,6 @@ jobs:
       - backend-lint-check
       - backend-build-maven
       - backend-unit-test
-      - backend-dependency-scan
       - backend-image-push
       - frontend-lint-check
       - frontend-unit-test
