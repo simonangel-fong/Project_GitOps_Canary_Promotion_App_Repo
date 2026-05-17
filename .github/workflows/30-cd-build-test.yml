@@ -100,7 +100,6 @@ jobs:
       - uses: actions/checkout@v6.0.2
       - uses: ./.github/actions/backend-dependency-scan
         with:
-          nvd-api-key: ${{ secrets.NVD_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   # Backend Image Scan

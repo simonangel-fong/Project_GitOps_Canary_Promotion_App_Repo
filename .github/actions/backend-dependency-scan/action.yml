@@ -17,9 +17,6 @@ inputs:
     description: Directory containing the Maven wrapper and pom.xml.
     required: false
     default: backend/app
-  nvd-api-key:
-    description: NVD API key used by OWASP Dependency Check to avoid rate limits.
-    required: true
   github-token:
     description: Token used to upload SARIF results to GitHub code scanning.
     required: true
@@ -54,12 +51,9 @@ runs:
     - name: OWASP Dependency Check
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      env:
-        NVD_API_KEY: ${{ inputs.nvd-api-key }}
       run: |
         for attempt in 1 2 3; do
           ./mvnw -Psecurity \
-            -DnvdApiKey="${NVD_API_KEY}" \
             -Dformats=HTML,JSON,SARIF \
             dependency-check:check && exit 0
           echo "Attempt $attempt failed; sleeping before retry..."
