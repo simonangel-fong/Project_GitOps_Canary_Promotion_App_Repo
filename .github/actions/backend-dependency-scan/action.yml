@@ -57,10 +57,15 @@ runs:
       env:
         NVD_API_KEY: ${{ inputs.nvd-api-key }}
       run: |
-        ./mvnw -Psecurity \
-          -DnvdApiKey="${NVD_API_KEY}" \
-          -Dformats=HTML,JSON,SARIF \
-          dependency-check:check
+        for attempt in 1 2 3; do
+          ./mvnw -Psecurity \
+            -DnvdApiKey="${NVD_API_KEY}" \
+            -Dformats=HTML,JSON,SARIF \
+            dependency-check:check && exit 0
+          echo "Attempt $attempt failed; sleeping before retry..."
+          sleep $((attempt * 30))
+        done
+        exit 1
 
     - name: Upload dependency-check report
       if: always()
