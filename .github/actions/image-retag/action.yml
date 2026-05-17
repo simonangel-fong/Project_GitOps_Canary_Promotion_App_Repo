@@ -1,5 +1,5 @@
 name: image-retag
-description: Pull a source image by digest, retag with a release tag plus a floating component tag, push both, and output the resulting digest.
+description: Pull a source image, retag with a release tag (and optional floating tag), and push to the registry.
 
 inputs:
   registry-namespace:
@@ -11,26 +11,19 @@ inputs:
   registry-password:
     description: Registry login password or token.
     required: true
-  image-repo:
-    description: Image repository name under the namespace (e.g. gitops-demo).
+  image-name:
+    description: Image repository name under the namespace (e.g. gitops-demo-backend).
     required: true
   source-tag:
-    description: Existing tag on the source image (e.g. backend-<git-sha>) used to locate the image to retag.
-    required: true
-  component-tag:
-    description: Floating component tag to publish (e.g. backend, frontend). Also used as the prefix for the release tag.
+    description: Existing tag on the source image (e.g. main-<git-sha>).
     required: true
   release-tag:
-    description: Release tag suffix (e.g. v1.2.3). Final tag pushed is <component-tag>-<release-tag>.
+    description: Release tag to publish (e.g. dev-v1.2.3).
     required: true
-
-outputs:
-  image-digest:
-    description: sha256 digest of the pushed manifest (e.g. sha256:abc...).
-    value: ${{ steps.push.outputs.digest }}
-  image-ref:
-    description: Fully qualified image reference with digest (namespace/repo@sha256:...).
-    value: ${{ steps.push.outputs.ref }}
+  floating-tag:
+    description: Optional floating tag to also push (e.g. dev). Leave empty to skip.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -42,31 +35,29 @@ runs:
         password: ${{ inputs.registry-password }}
 
     - name: Pull, retag, push
-      id: push
       shell: bash
       env:
         NAMESPACE_RAW: ${{ inputs.registry-namespace }}
-        IMAGE_REPO: ${{ inputs.image-repo }}
+        IMAGE_NAME: ${{ inputs.image-name }}
         SOURCE_TAG: ${{ inputs.source-tag }}
-        COMPONENT_TAG: ${{ inputs.component-tag }}
         RELEASE_TAG: ${{ inputs.release-tag }}
+        FLOATING_TAG: ${{ inputs.floating-tag }}
       run: |
         set -euo pipefail
         namespace="$(echo "$NAMESPACE_RAW" | tr '[:upper:]' '[:lower:]' | xargs)"
-        source_ref="${namespace}/${IMAGE_REPO}:${SOURCE_TAG}"
-        release_ref="${namespace}/${IMAGE_REPO}:${COMPONENT_TAG}-${RELEASE_TAG}"
-        floating_ref="${namespace}/${IMAGE_REPO}:${COMPONENT_TAG}"
+        source_ref="${namespace}/${IMAGE_NAME}:${SOURCE_TAG}"
+        release_ref="${namespace}/${IMAGE_NAME}:${RELEASE_TAG}"
 
         echo "Pulling $source_ref"
         docker pull "$source_ref"
 
         docker tag "$source_ref" "$release_ref"
-        docker tag "$source_ref" "$floating_ref"
-
         docker push "$release_ref"
-        docker push "$floating_ref"
+        echo "Pushed $release_ref"
 
-        digest="$(docker buildx imagetools inspect "$release_ref" --format '{{json .Manifest}}' | jq -r '.digest')"
-        echo "digest=$digest" >> "$GITHUB_OUTPUT"
-        echo "ref=${namespace}/${IMAGE_REPO}@${digest}" >> "$GITHUB_OUTPUT"
-        echo "Published $release_ref and $floating_ref ($digest)"
+        if [ -n "$FLOATING_TAG" ]; then
+          floating_ref="${namespace}/${IMAGE_NAME}:${FLOATING_TAG}"
+          docker tag "$source_ref" "$floating_ref"
+          docker push "$floating_ref"
+          echo "Pushed $floating_ref"
+        fi

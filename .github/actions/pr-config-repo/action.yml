@@ -1,5 +1,5 @@
 name: pr-config-repo
-description: Check out the GitOps config repo, update the component's rollout manifest with a new image digest, and open a pull request.
+description: Check out the GitOps config repo, bump the kustomize image newTag for a component, and open a pull request.
 
 inputs:
   config-repo:
@@ -8,14 +8,14 @@ inputs:
   config-repo-token:
     description: PAT with repo + workflow scope on the config repo. Used for checkout, push, and gh pr create.
     required: true
-  manifest-path:
-    description: Path to the rollout manifest in the config repo (e.g. app/backend/base/20_rollout.yaml).
+  kustomization-path:
+    description: Path to the kustomization.yaml in the config repo (e.g. app/backend/overlays/dev/kustomization.yaml).
     required: true
-  image-repo-ref:
-    description: Image reference without digest, used as the sed anchor (e.g. simonangelfong/gitops-demo).
+  image-kustomize-name:
+    description: The `name:` value in the images[] entry to update (e.g. gitops-demo-backend).
     required: true
-  image-digest:
-    description: New sha256 digest to write into the manifest (e.g. sha256:abc...).
+  new-tag:
+    description: New tag to write into the images[] entry's newTag field.
     required: true
   component:
     description: Component label used in branch name, commit message, and PR title (e.g. backend, frontend).
@@ -37,70 +37,55 @@ runs:
         token: ${{ inputs.config-repo-token }}
         path: config-repo
 
-    - name: Update manifest and open PR
+    - name: Update kustomization and open PR
       shell: bash
       working-directory: config-repo
       env:
         GH_TOKEN: ${{ inputs.config-repo-token }}
-        MANIFEST_PATH: ${{ inputs.manifest-path }}
-        IMAGE_REPO_REF: ${{ inputs.image-repo-ref }}
-        IMAGE_DIGEST: ${{ inputs.image-digest }}
+        KUSTOMIZATION_PATH: ${{ inputs.kustomization-path }}
+        IMAGE_KUSTOMIZE_NAME: ${{ inputs.image-kustomize-name }}
+        NEW_TAG: ${{ inputs.new-tag }}
         COMPONENT: ${{ inputs.component }}
         RELEASE_TAG: ${{ inputs.release-tag }}
         SOURCE_RUN_URL: ${{ inputs.source-run-url }}
+        CONFIG_REPO: ${{ inputs.config-repo }}
       run: |
         set -euo pipefail
 
-        if [ ! -f "$MANIFEST_PATH" ]; then
-          echo "Manifest not found: $MANIFEST_PATH"
+        if [ ! -f "$KUSTOMIZATION_PATH" ]; then
+          echo "Kustomization not found: $KUSTOMIZATION_PATH" >&2
           exit 1
+        fi
+
+        # Ensure the images[] entry exists before we try to update it.
+        match_count="$(yq eval "[.images[]? | select(.name == \"$IMAGE_KUSTOMIZE_NAME\")] | length" "$KUSTOMIZATION_PATH")"
+        if [ "$match_count" = "0" ]; then
+          echo "No images[] entry with name=$IMAGE_KUSTOMIZE_NAME in $KUSTOMIZATION_PATH" >&2
+          exit 1
+        fi
+
+        yq eval -i \
+          "(.images[] | select(.name == \"$IMAGE_KUSTOMIZE_NAME\").newTag) = \"$NEW_TAG\"" \
+          "$KUSTOMIZATION_PATH"
+
+        if git diff --quiet; then
+          echo "newTag already set to $NEW_TAG; skipping PR."
+          exit 0
         fi
 
         branch="release/${COMPONENT}-${RELEASE_TAG}"
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git checkout -b "$branch"
-
-        # Replace the digest on the image line for this component's repo.
-        # Matches:  image: <IMAGE_REPO_REF>:<anything>@sha256:<hex>
-        # Replaces only the @sha256:<hex> portion.
-        python3 - <<'PY'
-        import os, re, sys
-        path = os.environ["MANIFEST_PATH"]
-        repo = re.escape(os.environ["IMAGE_REPO_REF"])
-        digest = os.environ["IMAGE_DIGEST"]
-        pattern = re.compile(
-            rf'(image:\s*{repo}:[^\s@]+)@sha256:[0-9a-f]+'
-        )
-        with open(path, "r", encoding="utf-8") as f:
-            original = f.read()
-        updated, n = pattern.subn(rf'\1@{digest}', original)
-        if n == 0:
-            print(f"No image line matched in {path}", file=sys.stderr)
-            sys.exit(1)
-        if updated == original:
-            print(f"Digest already up to date in {path}")
-            sys.exit(0)
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(updated)
-        print(f"Updated {n} line(s) in {path}")
-        PY
-
-        if git diff --quiet; then
-          echo "No manifest changes; skipping PR."
-          exit 0
-        fi
-
-        git add "$MANIFEST_PATH"
+        git add "$KUSTOMIZATION_PATH"
         git commit -m "release(${COMPONENT}): ${RELEASE_TAG}"
         git push --set-upstream origin "$branch"
 
         gh pr create \
-          --repo "${{ inputs.config-repo }}" \
+          --repo "$CONFIG_REPO" \
           --base main \
           --head "$branch" \
           --title "release(${COMPONENT}): ${RELEASE_TAG}" \
-          --body "Bump \`${COMPONENT}\` image to \`${IMAGE_DIGEST}\`.
+          --body "Bump \`${IMAGE_KUSTOMIZE_NAME}\` newTag to \`${NEW_TAG}\`.
 
-        Release tag: \`${RELEASE_TAG}\`
         Triggered by: ${SOURCE_RUN_URL}"

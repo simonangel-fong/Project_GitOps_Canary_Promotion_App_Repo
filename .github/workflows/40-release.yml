@@ -12,13 +12,20 @@ on:
           - frontend
           - both
       source-sha:
-        description: Git sha used as the source image tag suffix (e.g. the commit sha published by 30-cd-build-test).
+        description: Git sha used as the source image tag suffix (e.g. the commit sha published by 30-cd-build-test as main-<sha>).
         required: true
         type: string
       release-tag:
-        description: Release tag to publish (e.g. v1.2.3). Final image tag is <component>-<release-tag>.
+        description: Release tag to publish (e.g. dev-v1.2.3). Written verbatim into kustomize newTag.
         required: true
         type: string
+      environment:
+        description: Target environment overlay.
+        required: true
+        type: choice
+        default: dev
+        options:
+          - dev
 
 concurrency:
   group: release-${{ inputs.component }}-${{ inputs.release-tag }}
@@ -28,11 +35,10 @@ permissions:
   contents: read
 
 env:
-  registry-namespace: ${{ secrets.DOCKERHUB_USERNAME }}
-  image-repo: gitops-demo
+  source-tag-prefix: main
+  backend-image-name: gitops-demo-backend
+  frontend-image-name: gitops-demo-frontend
   config-repo: simonangel-fong/Project_GitOps_Config_Repo
-  backend-manifest-path: app/backend/base/20_rollout.yaml
-  frontend-manifest-path: app/frontend/base/20_rollout.yaml
 
 jobs:
   resolve-matrix:
@@ -62,6 +68,32 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
 
+      - name: Resolve component vars
+        id: vars
+        shell: bash
+        env:
+          COMPONENT: ${{ matrix.component }}
+          BACKEND_IMAGE: ${{ env.backend-image-name }}
+          FRONTEND_IMAGE: ${{ env.frontend-image-name }}
+        run: |
+          set -euo pipefail
+          if [ "$COMPONENT" = "backend" ]; then
+            image_name="$BACKEND_IMAGE"
+          else
+            image_name="$FRONTEND_IMAGE"
+          fi
+          echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
+          echo "kustomization-path=app/${COMPONENT}/overlays/${{ inputs.environment }}/kustomization.yaml" >> "$GITHUB_OUTPUT"
+
+      - name: Mint config-repo token
+        id: config-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.CONFIG_BOT_APP_ID }}
+          private-key: ${{ secrets.CONFIG_BOT_PRIVATE_KEY }}
+          owner: simonangel-fong
+          repositories: Project_GitOps_Config_Repo
+
       - name: Docker login
         uses: docker/login-action@v4.1.0
         with:
@@ -71,36 +103,34 @@ jobs:
       - name: Verify source image exists
         shell: bash
         env:
-          NAMESPACE_RAW: ${{ env.registry-namespace }}
-          IMAGE_REPO: ${{ env.image-repo }}
-          SOURCE_TAG: ${{ matrix.component }}-${{ inputs.source-sha }}
+          NAMESPACE_RAW: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_NAME: ${{ steps.vars.outputs.image-name }}
+          SOURCE_TAG: ${{ env.source-tag-prefix }}-${{ inputs.source-sha }}
         run: |
           set -euo pipefail
           namespace="$(echo "$NAMESPACE_RAW" | tr '[:upper:]' '[:lower:]' | xargs)"
-          ref="${namespace}/${IMAGE_REPO}:${SOURCE_TAG}"
+          ref="${namespace}/${IMAGE_NAME}:${SOURCE_TAG}"
           echo "Inspecting $ref"
           docker buildx imagetools inspect "$ref"
 
       - name: Retag and push
-        id: retag
         uses: ./.github/actions/image-retag
         with:
           registry-namespace: ${{ secrets.DOCKERHUB_USERNAME }}
           registry-username: ${{ secrets.DOCKERHUB_USERNAME }}
           registry-password: ${{ secrets.DOCKERHUB_TOKEN }}
-          image-repo: ${{ env.image-repo }}
-          source-tag: ${{ matrix.component }}-${{ inputs.source-sha }}
-          component-tag: ${{ matrix.component }}
+          image-name: ${{ steps.vars.outputs.image-name }}
+          source-tag: ${{ env.source-tag-prefix }}-${{ inputs.source-sha }}
           release-tag: ${{ inputs.release-tag }}
 
       - name: Open config repo PR
         uses: ./.github/actions/pr-config-repo
         with:
           config-repo: ${{ env.config-repo }}
-          config-repo-token: ${{ secrets.CONFIG_REPO_TOKEN }}
-          manifest-path: ${{ matrix.component == 'backend' && env.backend-manifest-path || env.frontend-manifest-path }}
-          image-repo-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.image-repo }}
-          image-digest: ${{ steps.retag.outputs.image-digest }}
+          config-repo-token: ${{ steps.config-token.outputs.token }}
+          kustomization-path: ${{ steps.vars.outputs.kustomization-path }}
+          image-kustomize-name: ${{ steps.vars.outputs.image-name }}
+          new-tag: ${{ inputs.release-tag }}
           component: ${{ matrix.component }}
           release-tag: ${{ inputs.release-tag }}
           source-run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

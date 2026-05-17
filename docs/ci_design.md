@@ -105,6 +105,16 @@
   - pr-config-repo
   - notify-slack
 
+```sh
+cd app/backend/overlays/dev
+kustomize edit set image gitops-demo-backend=docker.io/simonangelfong/gitops-demo-backend:dev-${GIT_SHA}@sha256:${DIGEST}
+
+
+cd app/frontend/overlays/dev
+kustomize edit set image gitops-demo-frontend=docker.io/simonangelfong/gitops-demo-frontend:dev-${GIT_SHA}@sha256:${DIGEST}
+
+```
+
 ---
 
 archived
