@@ -213,16 +213,11 @@ jobs:
       - backend-lint-check
       - backend-build-maven
       - backend-unit-test
-      - backend-build-image
-      # - backend-image-scan
       - backend-image-push
       - frontend-lint-check
       - frontend-unit-test
       - frontend-build-npm
-      - frontend-build-image
-      # - frontend-image-scan
       - frontend-image-push
-      # - ci-smoke-test
     if: always()
     steps:
       - uses: actions/checkout@v6.0.2
