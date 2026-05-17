@@ -222,7 +222,7 @@ jobs:
       - frontend-build-image
       # - frontend-image-scan
       - frontend-image-push
-      - ci-smoke-test
+      # - ci-smoke-test
     if: always()
     steps:
       - uses: actions/checkout@v6.0.2
