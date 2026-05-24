@@ -83,7 +83,7 @@ jobs:
             image_name="$FRONTEND_IMAGE"
           fi
           echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
-          echo "kustomization-path=app/${COMPONENT}/overlays/${{ inputs.environment }}/kustomization.yaml" >> "$GITHUB_OUTPUT"
+          echo "kustomization-path=apps/${COMPONENT}/overlays/${{ inputs.environment }}/kustomization.yaml" >> "$GITHUB_OUTPUT"
 
       - name: Mint config-repo token
         id: config-token
