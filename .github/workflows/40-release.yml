@@ -89,10 +89,10 @@ jobs:
         id: config-token
         uses: actions/create-github-app-token@v2
         with:
-          app-id: ${{ secrets.CONFIG_BOT_APP_ID }}
+          app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.CONFIG_BOT_PRIVATE_KEY }}
           owner: simonangel-fong
-          repositories: Project_GitOps_Config_Repo
+          repositories: Project_GitOps_Platform_Repo
 
       - name: Docker login
         uses: docker/login-action@v4.1.0
