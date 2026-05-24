@@ -1,11 +1,11 @@
-name: pr-config-repo
+name: pr-platform-repo
 description: Check out the GitOps config repo, bump the kustomize image newTag for a component, and open a pull request.
 
 inputs:
-  config-repo:
+  platform-repo:
     description: Full name of the config repo (owner/repo).
     required: true
-  config-repo-token:
+  platform-repo-token:
     description: PAT with repo + workflow scope on the config repo. Used for checkout, push, and gh pr create.
     required: true
   kustomization-path:
@@ -36,23 +36,23 @@ runs:
     - name: Checkout config repo
       uses: actions/checkout@v6.0.2
       with:
-        repository: ${{ inputs.config-repo }}
-        token: ${{ inputs.config-repo-token }}
+        repository: ${{ inputs.platform-repo }}
+        token: ${{ inputs.platform-repo-token }}
         ref: ${{ inputs.environment }}
-        # path: config-repo
+        path: .
 
     - name: Update kustomization and open PR
       shell: bash
-      working-directory: config-repo
+      working-directory: .
       env:
-        GH_TOKEN: ${{ inputs.config-repo-token }}
+        GH_TOKEN: ${{ inputs.platform-repo-token }}
         KUSTOMIZATION_PATH: ${{ inputs.kustomization-path }}
         IMAGE_KUSTOMIZE_NAME: ${{ inputs.image-kustomize-name }}
         NEW_TAG: ${{ inputs.new-tag }}
         COMPONENT: ${{ inputs.component }}
         RELEASE_TAG: ${{ inputs.release-tag }}
         SOURCE_RUN_URL: ${{ inputs.source-run-url }}
-        CONFIG_REPO: ${{ inputs.config-repo }}
+        CONFIG_REPO: ${{ inputs.platform-repo }}
         ENVIRONMENT: ${{ inputs.environment }}
       run: |
         set -euo pipefail
