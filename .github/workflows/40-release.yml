@@ -38,7 +38,7 @@ env:
   source-tag-prefix: main
   backend-image-name: gitops-demo-backend
   frontend-image-name: gitops-demo-frontend
-  config-repo: simonangel-fong/Project_GitOps_Config_Repo
+  platform-repo: simonangel-fong/Project_GitOps_Platform_Repo
 
 jobs:
   resolve-matrix:
@@ -85,8 +85,8 @@ jobs:
           echo "image-name=$image_name" >> "$GITHUB_OUTPUT"
           echo "kustomization-path=apps/${COMPONENT}/overlays/${{ inputs.environment }}/kustomization.yaml" >> "$GITHUB_OUTPUT"
 
-      - name: Mint config-repo token
-        id: config-token
+      - name: Mint platform-repo token
+        id: platform-token
         uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.APP_ID }}
@@ -124,10 +124,10 @@ jobs:
           release-tag: ${{ inputs.release-tag }}
 
       - name: Open config repo PR
-        uses: ./.github/actions/pr-config-repo
+        uses: ./.github/actions/pr-platform-repo
         with:
-          config-repo: ${{ env.config-repo }}
-          config-repo-token: ${{ steps.config-token.outputs.token }}
+          platform-repo: ${{ env.platform-repo }}
+          platform-repo-token: ${{ steps.platform-token.outputs.token }}
           kustomization-path: ${{ steps.vars.outputs.kustomization-path }}
           image-kustomize-name: ${{ steps.vars.outputs.image-name }}
           new-tag: ${{ inputs.release-tag }}
