@@ -39,7 +39,7 @@ runs:
         repository: ${{ inputs.config-repo }}
         token: ${{ inputs.config-repo-token }}
         ref: ${{ inputs.environment }}
-        path: config-repo
+        # path: config-repo
 
     - name: Update kustomization and open PR
       shell: bash
