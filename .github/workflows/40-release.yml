@@ -135,7 +135,7 @@ jobs:
           release-tag: ${{ inputs.release-tag }}
           source-run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           environment: ${{ inputs.environment }}
-
+          target-branch: ${{ inputs.environment }}
   notify:
     runs-on: ubuntu-latest
     needs:

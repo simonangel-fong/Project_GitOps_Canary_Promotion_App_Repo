@@ -32,7 +32,7 @@ inputs:
   target-branch:
     description: Platform-repo branch the PR is opened against.
     required: false
-    default: dev
+    default: main
 
 runs:
   using: composite
