@@ -27,23 +27,27 @@ inputs:
     description: URL of the calling workflow run, included in the PR body for traceability.
     required: true
   environment:
-    description: Target environment overlay; also the config repo branch the PR is opened against (e.g. dev, stage, prod).
+    description: Target environment overlay (e.g. dev, stage, prod). Used in branch name and PR title.
     required: true
+  target-branch:
+    description: Platform-repo branch the PR is opened against.
+    required: false
+    default: main
 
 runs:
   using: composite
   steps:
-    - name: Checkout config repo
+    - name: Checkout platform repo
       uses: actions/checkout@v6.0.2
       with:
         repository: ${{ inputs.platform-repo }}
         token: ${{ inputs.platform-repo-token }}
-        ref: ${{ inputs.environment }}
-        path: .
+        ref: ${{ inputs.target-branch }}
+        path: platform-repo
 
     - name: Update kustomization and open PR
       shell: bash
-      working-directory: .
+      working-directory: platform-repo
       env:
         GH_TOKEN: ${{ inputs.platform-repo-token }}
         KUSTOMIZATION_PATH: ${{ inputs.kustomization-path }}
@@ -52,8 +56,9 @@ runs:
         COMPONENT: ${{ inputs.component }}
         RELEASE_TAG: ${{ inputs.release-tag }}
         SOURCE_RUN_URL: ${{ inputs.source-run-url }}
-        CONFIG_REPO: ${{ inputs.platform-repo }}
+        PLATFORM_REPO: ${{ inputs.platform-repo }}
         ENVIRONMENT: ${{ inputs.environment }}
+        TARGET_BRANCH: ${{ inputs.target-branch }}
       run: |
         set -euo pipefail
 
@@ -78,19 +83,21 @@ runs:
           exit 0
         fi
 
-        branch="release/${COMPONENT}-${RELEASE_TAG}"
+        branch="release/${ENVIRONMENT}/${COMPONENT}-${RELEASE_TAG}"
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git checkout -b "$branch"
         git add "$KUSTOMIZATION_PATH"
-        git commit -m "release(${COMPONENT}): ${RELEASE_TAG}"
+        git commit -m "release(${ENVIRONMENT}/${COMPONENT}): ${RELEASE_TAG}"
         git push --set-upstream origin "$branch"
 
-        gh pr create \
-          --repo "$CONFIG_REPO" \
-          --base "$ENVIRONMENT" \
-          --head "$branch" \
-          --title "release(${COMPONENT}): ${RELEASE_TAG}" \
-          --body "Bump \`${IMAGE_KUSTOMIZE_NAME}\` newTag to \`${NEW_TAG}\`.
+        body=$(printf '%s\n\n%s\n' \
+          "Bump \`${IMAGE_KUSTOMIZE_NAME}\` newTag to \`${NEW_TAG}\` in \`${KUSTOMIZATION_PATH}\`." \
+          "Triggered by: ${SOURCE_RUN_URL}")
 
-        Triggered by: ${SOURCE_RUN_URL}"
+        gh pr create \
+          --repo "$PLATFORM_REPO" \
+          --base "$TARGET_BRANCH" \
+          --head "$branch" \
+          --title "release(${ENVIRONMENT}/${COMPONENT}): ${RELEASE_TAG}" \
+          --body "$body"
