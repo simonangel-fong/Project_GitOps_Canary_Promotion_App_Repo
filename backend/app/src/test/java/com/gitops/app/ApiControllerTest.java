@@ -24,18 +24,30 @@ class ApiControllerTest {
     }
 
     @Test
-    void health_returns200AndOK() throws Exception {
-        mockMvc.perform(get("/api/health"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("OK"));
-    }
-
-    @Test
-    void root_returns200AndJsonFields() throws Exception {
+    void root_returnsVersionAndBgColor() throws Exception {
         mockMvc.perform(get("/api"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith("application/json"))
-                .andExpect(jsonPath("$.app").value("gitops"))
-                .andExpect(jsonPath("$.version").value("0.1.0"));
+                .andExpect(jsonPath("$.version").value("0.1.0"))
+                .andExpect(jsonPath("$.bg_color").value("green"));
+    }
+
+    @Test
+    void healthz_returnsOkWhenPgdbDisabled() throws Exception {
+        mockMvc.perform(get("/api/healthz"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+    }
+
+    @Test
+    void env_returnsAllSixVars() throws Exception {
+        mockMvc.perform(get("/api/env"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.FRONTEND_BG_COLOR").value("green"))
+                .andExpect(jsonPath("$.BACKEND_VERSION").value("0.1.0"))
+                .andExpect(jsonPath("$.PGDB_ENABLE").value(false))
+                .andExpect(jsonPath("$.PGDB_URL").value("jdbc:postgresql://postgres:5432/demo_db"))
+                .andExpect(jsonPath("$.OOM_ENABLE").value(false))
+                .andExpect(jsonPath("$.OOM_TIME").value(0));
     }
 }
