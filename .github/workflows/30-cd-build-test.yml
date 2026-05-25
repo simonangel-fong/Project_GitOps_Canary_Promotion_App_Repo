@@ -227,13 +227,13 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     needs:
-      - backend-lint-check
-      - backend-build-maven
-      - backend-unit-test
+      # - backend-lint-check
+      # - backend-build-maven
+      # - backend-unit-test
       - backend-image-push
-      - frontend-lint-check
-      - frontend-unit-test
-      - frontend-build-npm
+      # - frontend-lint-check
+      # - frontend-unit-test
+      # - frontend-build-npm
       - frontend-image-push
     if: always()
     steps:
