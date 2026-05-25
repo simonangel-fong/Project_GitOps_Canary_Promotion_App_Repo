@@ -18,15 +18,16 @@ runs:
       env:
         NEEDS_JSON: ${{ inputs.needs-context }}
         WORKFLOW_NAME: ${{ github.workflow }}
+        REPO_NAME: ${{ github.repository }}
       run: |
         if echo "$NEEDS_JSON" | grep -E '"result"[[:space:]]*:[[:space:]]*"(failure|cancelled)"' > /dev/null; then
           echo "icon=:x:" >> "$GITHUB_OUTPUT"
           echo "color=danger" >> "$GITHUB_OUTPUT"
-          echo "title=${WORKFLOW_NAME} failed" >> "$GITHUB_OUTPUT"
+          echo "title=[${REPO_NAME}] ${WORKFLOW_NAME} failed" >> "$GITHUB_OUTPUT"
         else
           echo "icon=:white_check_mark:" >> "$GITHUB_OUTPUT"
           echo "color=good" >> "$GITHUB_OUTPUT"
-          echo "title=${WORKFLOW_NAME} succeeded" >> "$GITHUB_OUTPUT"
+          echo "title=[${REPO_NAME}] ${WORKFLOW_NAME} succeeded" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Notify Slack
@@ -41,6 +42,7 @@ runs:
               {
                 "color": "${{ steps.status.outputs.color }}",
                 "fields": [
+                  { "title": "Repo",    "value": "${{ github.repository }}", "short": true },
                   { "title": "Branch",  "value": "${{ github.ref_name }}", "short": true },
                   { "title": "Commit",  "value": "${{ github.sha }}", "short": true },
                   { "title": "Run",     "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}", "short": false }
