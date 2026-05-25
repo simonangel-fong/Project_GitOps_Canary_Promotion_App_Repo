@@ -9,6 +9,7 @@ on:
       - backend/**
       - frontend/**
       - .github/workflows/**
+      - .github/actions/**
 
 concurrency:
   group: cd-build-test
