@@ -5,7 +5,7 @@ RUN npm ci
 COPY app/ .
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:alpine3.23-perl@sha256:8b87091ac53a3d9073fe265e83b2cb4dbeef3294e19ce3a802bf8f18184c79eb
+FROM nginxinc/nginx-unprivileged:alpine3.23@sha256:8122337ed6c475bb486bc9340da453d4599f225e6b920ff0d92ca2267486b9b5
 WORKDIR /usr/share/nginx/html
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx/nginx.conf.template /etc/nginx/templates/default.conf.template

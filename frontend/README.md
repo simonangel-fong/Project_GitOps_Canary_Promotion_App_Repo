@@ -293,12 +293,9 @@ npm test
 npm run build
 
 # image-scan
-docker build -t gitops-frontend .
-trivy image simonangelfong/gitops-demo:frontend-latest
-
-
-docker compose up -d --build
-docker compose down -v
+cd frontend
+docker build -t simonangelfong/gitops-demo-frontend .
+trivy image simonangelfong/gitops-demo-frontend
 
 
 
