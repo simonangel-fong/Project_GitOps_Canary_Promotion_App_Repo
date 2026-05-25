@@ -16,12 +16,24 @@ describe('App', () => {
   it('displays version from backend', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({ version: '1.2.3' }),
+      json: async () => ({ version: '1.2.3', bg_color: 'green' }),
     })
     render(<App />)
     await waitFor(() =>
       expect(screen.getByText(/gitops demo app - 1\.2\.3/i)).toBeInTheDocument()
     )
+  })
+
+  it('applies bg_color from backend to the page background', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ version: '1.2.3', bg_color: 'blue' }),
+    })
+    const { container } = render(<App />)
+    await waitFor(() =>
+      expect(screen.getByText(/gitops demo app - 1\.2\.3/i)).toBeInTheDocument()
+    )
+    expect(container.querySelector('.page').style.backgroundColor).toBe('blue')
   })
 
   it('shows unavailable when fetch fails', async () => {

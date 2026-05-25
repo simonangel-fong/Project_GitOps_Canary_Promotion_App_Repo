@@ -30,11 +30,13 @@
 
 A minimal React single-page application with one page:
 
-- Fetches the application version from `GET /version` on the backend
+- Fetches `{version, bg_color}` from `GET /api` on the backend
 - Displays the version in a centered title: `GitOps Demo App - <version>`
-- Green background, no other UI elements
+- Paints the full-page background using the `bg_color` returned by the backend
 
-This makes it easy to verify that different deployments serve different versions end-to-end, without changing any application code.
+The nginx container also serves `GET /healthz` directly (no upstream call) for K8s liveness/readiness probes — the frontend is considered healthy as long as nginx is serving static assets, independent of the backend.
+
+This makes it easy to verify that different deployments serve different versions and theme colors end-to-end, without changing any application code.
 
 ---
 
@@ -42,9 +44,10 @@ This makes it easy to verify that different deployments serve different versions
 
 ### Functionalities
 
-1. On load, fetch the application version from the backend `GET /version` endpoint
+1. On load, fetch `{version, bg_color}` from the backend `GET /api` endpoint
 2. Render the version in the page title: `GitOps Demo App - <version>`
-3. Display a green background with the title centered on the page
+3. Paint the full-page background using `bg_color` from the response, with the title centered on the page
+4. Expose `GET /healthz` on the nginx container, returning HTTP 200 `ok` independently of the backend, for K8s liveness/readiness probes
 
 ### Out of Scope
 
@@ -60,13 +63,13 @@ This module is intentionally minimal for GitOps demonstration purposes. The foll
 
 ## UI Specification
 
-| Element    | Value                               |
-| ---------- | ----------------------------------- |
-| Layout     | Single centered title, full-page    |
-| Background | Green                               |
-| Title      | `GitOps Demo App - <version>`       |
-| Version    | Fetched from backend `GET /version` |
-| Fallback   | Show `loading...` while fetching    |
+| Element    | Value                                                      |
+| ---------- | ---------------------------------------------------------- |
+| Layout     | Single centered title, full-page                           |
+| Background | Driven by `bg_color` from `GET /api` (defaults to green)   |
+| Title      | `GitOps Demo App - <version>`                              |
+| Version    | Fetched from backend `GET /api` (`version` field)          |
+| Fallback   | Show `loading...` while fetching; `unavailable` on failure |
 
 ---
 
@@ -94,8 +97,8 @@ frontend/
 | Language          | JavaScript  |
 | Build tool        | Vite        |
 | Project directory | `frontend/` |
-| Backend URL       | `/version`  |
-| Default port      | `3000`      |
+| Backend URL       | `/api`      |
+| Default port      | `8080`      |
 | Production server | nginx       |
 
 ---
@@ -119,11 +122,11 @@ npm install
 
 ### Step 2 — Implement the Page Layout
 
-Edit `App.jsx` to render a full-page green background with a centered title.
+Edit `App.jsx` to render a full-page background with a centered title.
 
 Expected layout:
 
-- Background: green (`#4caf50` or equivalent)
+- Background: green (`#4caf50` or equivalent) — used as the default until the backend response arrives
 - Title: `GitOps Demo App - 0.1.0` (hardcoded for now)
 - Title is centered horizontally and vertically
 
@@ -139,26 +142,40 @@ npm run dev
 
 ### Step 3 — Connect to the Backend
 
-Replace the hardcoded version with a `fetch` call to `GET /version` on page load.
+Replace the hardcoded version with a `fetch` call to `GET /api` on page load. The response body is `{version, bg_color}` — use `version` for the title and `bg_color` to drive the page background.
 
 ```jsx
 const [version, setVersion] = useState("loading...");
+const [bgColor, setBgColor] = useState(null);
 
 useEffect(() => {
-  fetch("/version")
+  fetch("/api")
     .then((res) => res.json())
-    .then((data) => setVersion(data.version));
+    .then((data) => {
+      setVersion(data.version);
+      if (data.bg_color) setBgColor(data.bg_color);
+    });
 }, []);
 ```
 
-The title must update to `GitOps Demo App - <version>` once the response arrives.
+Apply `bg_color` as an inline style on the page container so the CSS default still applies until the response arrives:
+
+```jsx
+<div className="page" style={bgColor ? { backgroundColor: bgColor } : undefined}>
+  <h1>GitOps Demo App - {version}</h1>
+</div>
+```
 
 ```sh
+cd frontend/app
 npm run dev
+
+curl -i http://localhost:5173/
 ```
 
 - [x] Version is fetched from the backend on load
-- [x] Title reflects the backend version value
+- [x] Title reflects the backend `version` value
+- [x] Page background reflects the backend `bg_color` value
 
 ---
 
@@ -169,7 +186,7 @@ Create a multi-stage `Dockerfile` at `frontend/Dockerfile`:
 - **Stage 1 (builder):** Install dependencies and build static assets with Vite
 - **Stage 2 (runtime):** Serve the built assets via nginx
 
-**nginx proxy configuration** — forward `/version` requests to the backend so the frontend container does not need to know the backend's host at build time:
+**nginx proxy configuration** — forward `/api` requests to the backend so the frontend container does not need to know the backend's host at build time, and expose `/healthz` directly for K8s probes:
 
 ```nginx
 server {
@@ -178,10 +195,14 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    location /version {
-        resolver 127.0.0.11 valid=5s;
-        set $backend ${BACKEND_URL};
-        proxy_pass $backend/version;
+    location = /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    location /api {
+        proxy_pass ${BACKEND_URL};
     }
 
     location / {
@@ -190,16 +211,21 @@ server {
 }
 ```
 
+`/healthz` is served by nginx itself — it does **not** proxy to the backend. A backend outage must not restart the frontend pod.
+
 **Verify locally** (requires the backend container to be running):
 
 ```sh
 cd frontend
-docker build -t gitops-frontend .
+docker build -t simonangelfong/gitops-demo-frontend .
+docker run --rm -d --name gitops-frontend -p 8000:8080 simonangelfong/gitops-demo-frontend
 
+curl -i http://localhost:8000
+curl -i http://localhost:8000/healthz
 # Page displays: GitOps Demo App - 0.1.0
 ```
 
-- [ ] Image builds successfully
+- [x] Image builds successfully
 
 ---
 
@@ -209,8 +235,13 @@ Wire the frontend and backend together using `docker-compose.yml` at the project
 
 ```sh
 # default version
-docker compose up -d --build
-docker compose down
+docker compose -f ci-test/docker-compose.yaml up -d --build
+docker compose -f ci-test/docker-compose.yaml ps
+
+curl -i http://localhost:8000/healthz
+curl -i http://localhost:8000/api 
+
+docker compose -f ci-test/docker-compose.yaml down -v
 
 # custom version
 APP_VERSION=1.2.3 docker compose up --build
@@ -219,7 +250,7 @@ APP_VERSION=1.2.3 docker compose up --build
 
 - [x] Both services start via `docker compose up`
 - [x] Page displays the version matching `APP_VERSION`
-- [x] Container starts and serves the page on port `8000`
+- [x] Container starts and serves the page on port `8080`
 - [x] Page displays the version fetched from the backend
 
 ---
@@ -229,10 +260,11 @@ APP_VERSION=1.2.3 docker compose up --build
 | #   | Criterion                                                              | Status |
 | --- | ---------------------------------------------------------------------- | ------ |
 | 1   | React app scaffolded and dev server starts                             | Done   |
-| 2   | Page renders green background with centered title                      | Done   |
-| 3   | Version is fetched from `GET /version` and rendered in the title       | Done   |
-| 4   | Docker image builds and container serves the page on port `3000`       | Done   |
+| 2   | Page renders backend-driven `bg_color` background with centered title  | Done   |
+| 3   | Version is fetched from `GET /api` and rendered in the title           | Done   |
+| 4   | Docker image builds and container serves the page on port `8080`       | Done   |
 | 5   | Full stack runs via `docker compose up` with correct version displayed | Done   |
+| 6   | `GET /healthz` returns HTTP 200 `ok` from nginx, independent of backend | Done   |
 
 ---
 

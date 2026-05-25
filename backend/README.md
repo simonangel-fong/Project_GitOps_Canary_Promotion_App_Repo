@@ -355,7 +355,7 @@ mvn org.owasp:dependency-check-maven:10.0.4:check
 mvn test
 
 docker build -t simonangelfong/gitops-demo-backend .
-docker run --rm -d --name gitops-test -p 8080:8080 simonangelfong/gitops-demo-backend
+docker run --rm -d --name gitops-backend -p 8080:8080 simonangelfong/gitops-demo-backend
 curl http://localhost:8080/api/healthz
 # {"status":"ok"}
 docker stop gitops-test
