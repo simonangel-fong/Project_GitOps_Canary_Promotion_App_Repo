@@ -32,6 +32,9 @@
 		<!-- TODO: remove when Spring Boot 4.0.7 ships with Tomcat >= 11.0.22.
 		     Pinned to patch CVE-2026-41293/41284/42498/43512/43513/43515. -->
 		<tomcat.version>11.0.22</tomcat.version>
+		<!-- TODO: remove when Spring Boot ships with postgresql >= 42.7.11.
+		     Pinned to patch CVE-2026-42198 (SCRAM iteration-count DoS). -->
+		<postgresql.version>42.7.11</postgresql.version>
 		<checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
 		<owasp-plugin.version>12.1.1</owasp-plugin.version>
 		<jacoco-plugin.version>0.8.13</jacoco-plugin.version>
@@ -40,6 +43,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 
 		<dependency>

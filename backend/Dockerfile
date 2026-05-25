@@ -9,7 +9,8 @@ RUN ./mvnw package -DskipTests -q && mv target/*.jar target/app.jar
 FROM eclipse-temurin:25.0.3_9-jre-ubi10-minimal@sha256:f03be975d9c9198ef47f0abcf9ac9f12e803d0243c604732f35d7676ee1ffe68
 WORKDIR /app
 COPY --from=builder /app/target/app.jar app.jar
-RUN groupadd --system appgroup && useradd --system --gid appgroup appuser
-USER appuser
+RUN groupadd --system --gid 1001 appgroup \
+ && useradd --system --uid 1001 --gid appgroup --no-create-home appuser
+USER 1001
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

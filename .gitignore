@@ -27,8 +27,6 @@ coverage.xml
 
 # Logs
 *.log
-<<<<<<< HEAD
-=======
 local_settings.py
 db.sqlite3
 db.sqlite3-journal

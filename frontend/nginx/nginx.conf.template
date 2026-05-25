@@ -1,5 +1,5 @@
 server {
-    listen 80;
+    listen 8080;
 
     root /usr/share/nginx/html;
     index index.html;
@@ -13,8 +13,16 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin";
     add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';";
 
+    location = /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
     location /api {
-        proxy_pass ${BACKEND_URL};
+        resolver 127.0.0.11 ipv6=off valid=10s;
+        set $backend_url ${BACKEND_URL};
+        proxy_pass $backend_url;
     }
 
     location / {
