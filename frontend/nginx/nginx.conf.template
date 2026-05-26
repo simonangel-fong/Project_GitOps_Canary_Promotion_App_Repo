@@ -20,7 +20,7 @@ server {
     }
 
     location /api {
-        resolver 127.0.0.11 ipv6=off valid=10s;
+        resolver ${DNS_RESOLVER} valid=10s ipv6=off;
         set $backend_url ${BACKEND_URL};
         proxy_pass $backend_url;
     }
