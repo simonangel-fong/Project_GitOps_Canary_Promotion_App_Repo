@@ -138,3 +138,7 @@ This repo uses CI/CD pipelines to validate application changes, build container 
 
 - [Debugging CI/CD Pipeline Failures](docs/runbook_cicd.md):
   - Diagnose lint check, unit test, dependency scan, image scan, Docker Compose integration test, and Docker push failures
+- [Debugging Backend](docs/runbook_backend.md):
+  - Diagnose backend Spring Boot failures and security scan.
+- [Debugging Frontend](docs/runbook_backend.md):
+  - Diagnose backend React and Nginx failures and security scan.

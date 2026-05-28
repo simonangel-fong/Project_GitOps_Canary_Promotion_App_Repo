@@ -1,13 +1,8 @@
-# Project GitOps Demo — Backend
+# Runbook - Debugging Backend
 
-**Goal:** Build a containerized Spring Boot REST API that exposes application metadata, a liveness/readiness endpoint, and an env-var dump. The service simulates database connection failures and OOM crashes via env vars, making it the failure-injection backend for a GitOps deployment demo.
+[Back](../README.md)
 
----
-
-## Table of Contents
-
-- [Project GitOps Demo — Backend](#project-gitops-demo--backend)
-  - [Table of Contents](#table-of-contents)
+- [Runbook - Debugging Backend](#runbook---debugging-backend)
   - [Module Overview](#module-overview)
   - [Requirements](#requirements)
     - [Functionalities](#functionalities)
@@ -67,14 +62,14 @@ This module is intentionally minimal for GitOps demonstration purposes. The foll
 
 ## Environment Variables
 
-| Variable            | Default                                       | Purpose                                                                       |
-| ------------------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
-| `FRONTEND_BG_COLOR` | `green`                                       | Background color the frontend reads from `GET /api` to theme its UI           |
-| `BACKEND_VERSION`   | `0.1.0`                                       | Version string returned by `GET /api`; shown as the page title in the frontend |
-| `PGDB_ENABLE`       | `false`                                       | When `true`, `/api/healthz` probes the database; failure → HTTP 503           |
-| `PGDB_URL`          | `jdbc:postgresql://postgres:5432/demo_db`     | JDBC connection string used when `PGDB_ENABLE=true`                           |
-| `OOM_ENABLE`        | `false`                                       | When `true`, schedules an OOM crash after startup                             |
-| `OOM_TIME`          | `0`                                           | Minutes to wait before triggering OOM (`0` = immediately)                     |
+| Variable            | Default                                   | Purpose                                                                        |
+| ------------------- | ----------------------------------------- | ------------------------------------------------------------------------------ |
+| `FRONTEND_BG_COLOR` | `green`                                   | Background color the frontend reads from `GET /api` to theme its UI            |
+| `BACKEND_VERSION`   | `0.1.0`                                   | Version string returned by `GET /api`; shown as the page title in the frontend |
+| `PGDB_ENABLE`       | `false`                                   | When `true`, `/api/healthz` probes the database; failure → HTTP 503            |
+| `PGDB_URL`          | `jdbc:postgresql://postgres:5432/demo_db` | JDBC connection string used when `PGDB_ENABLE=true`                            |
+| `OOM_ENABLE`        | `false`                                   | When `true`, schedules an OOM crash after startup                              |
+| `OOM_TIME`          | `0`                                       | Minutes to wait before triggering OOM (`0` = immediately)                      |
 
 ---
 
@@ -168,7 +163,7 @@ env:
   - name: OOM_ENABLE
     value: "true"
   - name: OOM_TIME
-    value: "2"   # crash 2 minutes after startup
+    value: "2" # crash 2 minutes after startup
 ```
 
 Set `OOM_TIME=0` to crash immediately on startup. With `OOM_ENABLE=false` (the default), the scheduler is never created.

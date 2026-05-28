@@ -1,13 +1,10 @@
-# Project GitOps Demo — Frontend
+# Runbook - Debugging Backend
 
 **Goal:** Build a containerized React application that fetches and displays the application version from the backend REST API. This service is the frontend component of a GitOps deployment demo.
 
 ---
 
-## Table of Contents
-
-- [Project GitOps Demo — Frontend](#project-gitops-demo--frontend)
-  - [Table of Contents](#table-of-contents)
+- [Runbook - Debugging Backend](#runbook---debugging-backend)
   - [Module Overview](#module-overview)
   - [Requirements](#requirements)
     - [Functionalities](#functionalities)
@@ -161,7 +158,10 @@ useEffect(() => {
 Apply `bg_color` as an inline style on the page container so the CSS default still applies until the response arrives:
 
 ```jsx
-<div className="page" style={bgColor ? { backgroundColor: bgColor } : undefined}>
+<div
+  className="page"
+  style={bgColor ? { backgroundColor: bgColor } : undefined}
+>
   <h1>GitOps Demo App - {version}</h1>
 </div>
 ```
@@ -239,7 +239,7 @@ docker compose -f ci-test/docker-compose.yaml up -d --build
 docker compose -f ci-test/docker-compose.yaml ps
 
 curl -i http://localhost:8000/healthz
-curl -i http://localhost:8000/api 
+curl -i http://localhost:8000/api
 
 docker compose -f ci-test/docker-compose.yaml down -v
 
@@ -257,13 +257,13 @@ APP_VERSION=1.2.3 docker compose up --build
 
 ## Acceptance Criteria
 
-| #   | Criterion                                                              | Status |
-| --- | ---------------------------------------------------------------------- | ------ |
-| 1   | React app scaffolded and dev server starts                             | Done   |
-| 2   | Page renders backend-driven `bg_color` background with centered title  | Done   |
-| 3   | Version is fetched from `GET /api` and rendered in the title           | Done   |
-| 4   | Docker image builds and container serves the page on port `8080`       | Done   |
-| 5   | Full stack runs via `docker compose up` with correct version displayed | Done   |
+| #   | Criterion                                                               | Status |
+| --- | ----------------------------------------------------------------------- | ------ |
+| 1   | React app scaffolded and dev server starts                              | Done   |
+| 2   | Page renders backend-driven `bg_color` background with centered title   | Done   |
+| 3   | Version is fetched from `GET /api` and rendered in the title            | Done   |
+| 4   | Docker image builds and container serves the page on port `8080`        | Done   |
+| 5   | Full stack runs via `docker compose up` with correct version displayed  | Done   |
 | 6   | `GET /healthz` returns HTTP 200 `ok` from nginx, independent of backend | Done   |
 
 ---
