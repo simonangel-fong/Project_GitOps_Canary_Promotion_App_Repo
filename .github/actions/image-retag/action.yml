@@ -12,7 +12,7 @@ inputs:
     description: Registry login password or token.
     required: true
   image-name:
-    description: Image repository name under the namespace (e.g. gitops-demo-backend).
+    description: Image repository name under the namespace (e.g. gitops-risk-control-backend).
     required: true
   source-tag:
     description: Existing tag on the source image (e.g. main-<git-sha>).

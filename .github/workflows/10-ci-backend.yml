@@ -22,7 +22,7 @@ permissions:
 
 env:
   backend-dockerfile-path: backend
-  backend-image-name: gitops-demo-backend
+  backend-image-name: gitops-risk-control-backend
   backend-image-tag: pr
 
 jobs:

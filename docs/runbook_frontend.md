@@ -300,8 +300,8 @@ trivy image simonangelfong/gitops-demo-frontend
 
 
 cd backend/
-docker build -t simonangelfong/gitops-demo-backend .
-docker push simonangelfong/gitops-demo-backend
+docker build -t simonangelfong/gitops-risk-control-backend .
+docker push simonangelfong/gitops-risk-control-backend
 
 cd frontend/
 docker build -t simonangelfong/gitops-demo-frontend .

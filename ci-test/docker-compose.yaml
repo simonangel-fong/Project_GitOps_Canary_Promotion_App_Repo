@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ${BACKEND_IMAGE:-simonangelfong/gitops-demo-backend}
+    image: ${BACKEND_IMAGE:-simonangelfong/gitops-risk-control-backend}
     environment:
       BACKEND_VERSION: ${BACKEND_VERSION:-1.4.2}
       # FRONTEND_BG_COLOR: ${FRONTEND_BG_COLOR:-green}

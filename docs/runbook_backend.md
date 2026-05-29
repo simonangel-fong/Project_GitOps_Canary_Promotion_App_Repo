@@ -297,12 +297,12 @@ Create a multi-stage `Dockerfile` at `backend/Dockerfile`:
 
 ```sh
 cd backend
-docker build -t simonangelfong/gitops-demo-backend .
-docker run -d --name gitops-demo-backend \
+docker build -t simonangelfong/gitops-risk-control-backend .
+docker run -d --name gitops-risk-control-backend \
   -e BACKEND_VERSION=1.2.3 \
   -e FRONTEND_BG_COLOR=blue \
   -p 8080:8080 \
-  simonangelfong/gitops-demo-backend
+  simonangelfong/gitops-risk-control-backend
 
 curl http://localhost:8080/api
 # {"version":"1.2.3","bg_color":"blue"}
@@ -313,7 +313,7 @@ curl http://localhost:8080/api/healthz
 curl http://localhost:8080/api/env
 # {"FRONTEND_BG_COLOR":"blue","BACKEND_VERSION":"1.2.3","PGDB_ENABLE":false,...}
 
-docker push simonangelfong/gitops-demo-backend
+docker push simonangelfong/gitops-risk-control-backend
 ```
 
 - [x] Image builds successfully
@@ -349,21 +349,21 @@ mvn org.owasp:dependency-check-maven:10.0.4:check
 # unit test
 mvn test
 
-docker build -t simonangelfong/gitops-demo-backend .
-docker run --rm -d --name gitops-backend -p 8080:8080 simonangelfong/gitops-demo-backend
+docker build -t simonangelfong/gitops-risk-control-backend .
+docker run --rm -d --name gitops-backend -p 8080:8080 simonangelfong/gitops-risk-control-backend
 curl http://localhost:8080/api/healthz
 # {"status":"ok"}
 docker stop gitops-test
 
 # image-scan
-trivy image simonangelfong/gitops-demo-backend
+trivy image simonangelfong/gitops-risk-control-backend
 
 docker compose -f ci-test/docker-compose.yaml up -d --build
 docker compose -f ci-test/docker-compose.yaml down -v
 
 cd backend/
-docker build -t simonangelfong/gitops-demo-backend .
-docker push simonangelfong/gitops-demo-backend
+docker build -t simonangelfong/gitops-risk-control-backend .
+docker push simonangelfong/gitops-risk-control-backend
 ```
 
 ## Local Check before pushing
