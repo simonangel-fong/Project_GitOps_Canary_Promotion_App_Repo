@@ -80,9 +80,17 @@ This repo uses CI/CD pipelines to validate application changes, build container 
 | Image delivery         | Docker build, image scan, Docker push                                                      | Build trusted application images, scan for vulnerabilities, and publish images to the registry |
 | Release version update | Human approval, image retag, commit updated image tag to Platform Repo Kustomize manifests | Control release version handoff while keeping deployment managed by GitOps                     |
 
-- **Build, Test, Push**:
+---
+
+- **Build, Test, Push Pipeline Diagram**:
 
   ![cd-build-test](./docs/assets/cd-build-test.png)
+
+- **Build, Test, Push Pipeline In Actions**:
+
+  ![cd-build-test](./docs/assets/cd-build-test-in-action.gif)
+
+---
 
 - **Release**:
 
