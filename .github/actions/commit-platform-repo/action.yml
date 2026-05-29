@@ -1,0 +1,99 @@
+name: commit-platform-repo
+description: Check out the GitOps platform repo, bump the kustomize image newTag for a component, and commit directly to the target branch.
+
+inputs:
+  platform-repo:
+    description: Full name of the platform repo (owner/repo).
+    required: true
+  platform-repo-token:
+    description: Token with contents:write on the platform repo. Used for checkout and push.
+    required: true
+  kustomization-path:
+    description: Path to the kustomization.yaml in the platform repo (e.g. apps/backend/overlays/dev/kustomization.yaml).
+    required: true
+  image-kustomize-name:
+    description: The `name:` value in the images[] entry to update (e.g. gitops-backend-image).
+    required: true
+  new-tag:
+    description: New tag to write into the images[] entry's newTag field.
+    required: true
+  component:
+    description: Component label used in the commit message (e.g. backend, frontend).
+    required: true
+  release-tag:
+    description: Release tag, used in the commit message.
+    required: true
+  source-run-url:
+    description: URL of the calling workflow run, included in the commit trailer for traceability.
+    required: true
+  environment:
+    description: Target environment overlay (e.g. dev, stage, prod). Used in the commit message.
+    required: true
+  target-branch:
+    description: Platform-repo branch to commit to.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout platform repo
+      uses: actions/checkout@v6.0.2
+      with:
+        repository: ${{ inputs.platform-repo }}
+        token: ${{ inputs.platform-repo-token }}
+        ref: ${{ inputs.target-branch }}
+        path: platform-repo
+
+    - name: Update kustomization and commit
+      shell: bash
+      working-directory: platform-repo
+      env:
+        KUSTOMIZATION_PATH: ${{ inputs.kustomization-path }}
+        IMAGE_KUSTOMIZE_NAME: ${{ inputs.image-kustomize-name }}
+        NEW_TAG: ${{ inputs.new-tag }}
+        COMPONENT: ${{ inputs.component }}
+        RELEASE_TAG: ${{ inputs.release-tag }}
+        SOURCE_RUN_URL: ${{ inputs.source-run-url }}
+        ENVIRONMENT: ${{ inputs.environment }}
+        TARGET_BRANCH: ${{ inputs.target-branch }}
+      run: |
+        set -euo pipefail
+
+        if [ ! -f "$KUSTOMIZATION_PATH" ]; then
+          echo "Kustomization not found: $KUSTOMIZATION_PATH" >&2
+          exit 1
+        fi
+
+        match_count="$(yq eval "[.images[]? | select(.name == \"$IMAGE_KUSTOMIZE_NAME\")] | length" "$KUSTOMIZATION_PATH")"
+        if [ "$match_count" = "0" ]; then
+          echo "No images[] entry with name=$IMAGE_KUSTOMIZE_NAME in $KUSTOMIZATION_PATH" >&2
+          exit 1
+        fi
+
+        yq eval -i \
+          "(.images[] | select(.name == \"$IMAGE_KUSTOMIZE_NAME\").newTag) = \"$NEW_TAG\"" \
+          "$KUSTOMIZATION_PATH"
+
+        if git diff --quiet; then
+          echo "newTag already set to $NEW_TAG; nothing to commit."
+          exit 0
+        fi
+
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add "$KUSTOMIZATION_PATH"
+        git commit -m "release(${ENVIRONMENT}/${COMPONENT}): ${RELEASE_TAG}" \
+                   -m "Bump ${IMAGE_KUSTOMIZE_NAME} newTag to ${NEW_TAG} in ${KUSTOMIZATION_PATH}." \
+                   -m "Source run: ${SOURCE_RUN_URL}"
+
+        # Push with a simple retry to absorb races with concurrent commits on the same branch.
+        for attempt in 1 2 3; do
+          if git push origin "HEAD:${TARGET_BRANCH}"; then
+            exit 0
+          fi
+          echo "Push failed (attempt ${attempt}); rebasing on latest ${TARGET_BRANCH} and retrying."
+          git pull --rebase origin "$TARGET_BRANCH"
+        done
+
+        echo "Push to ${TARGET_BRANCH} failed after 3 attempts." >&2
+        exit 1
