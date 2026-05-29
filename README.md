@@ -84,14 +84,19 @@ This repo uses CI/CD pipelines to validate application changes, build container 
 
 - **Build, Test, Push Pipeline Diagram**:
 
-  ![cd-build-test](./docs/assets/cd-build-test.png)
+  ![cd-build-test-diagram](./docs/assets/cd-build-test.png)
 
-- **Build, Test, Push Pipeline In Actions**:
+- **Build, Test, Push Pipeline In Action**:
 
-  ![cd-build-test](./docs/assets/cd-build-test-in-action.gif)
+  ![cd-build-test-in-action](./docs/assets/cd-build-test-in-action.gif)
 
 ---
 
-- **Release**:
+- **Image Release Pipeline Diagram**:
 
-  ![cd-release](./docs/assets/cd-release.png)
+  ![cd-release-diagram](./docs/assets/cd-release.png)
+
+
+- **Image Release Pipeline in Action**:
+
+  ![cd-release-in-action](./docs/assets/cd-release.gif)
