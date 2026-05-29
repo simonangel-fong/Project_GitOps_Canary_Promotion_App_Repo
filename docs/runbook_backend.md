@@ -412,3 +412,14 @@ git diff --staged
 git fetch origin
 git rebase origin/main
 ```
+
+- Single vs Multi-stages build
+
+```sh
+docker build -t backend:multi  -f backend/Dockerfile backend
+docker build -t backend:single -f backend/Dockerfile.single backend
+docker images backend
+# REPOSITORY   TAG       IMAGE ID       CREATED          SIZE
+# backend      single    7c8dc31674a4   24 seconds ago   932MB
+# backend      multi     7572a1303ea5   42 seconds ago   578MB
+```

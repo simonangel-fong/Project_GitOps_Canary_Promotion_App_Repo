@@ -65,7 +65,7 @@ Multi-stage Docker builds separate build-time dependencies from runtime images, 
 | Backend  | Maven builds the Spring Boot `.jar` with a JDK image | Runs the `.jar` with a lightweight JRE image | Removes build tools from the runtime image and reduces image size                      |
 | Frontend | Node.js builds static React assets                   | Nginx serves the compiled static files       | Removes Node/npm from runtime and uses an unprivileged Nginx image for safer execution |
 
-![docker-multi-stage-build](./docs/assets/docker-multi-stage-build.gif)
+![docker-multi-stage-build](./docs/assets/docker-multi-stage-build.png)
 
 ---
 
