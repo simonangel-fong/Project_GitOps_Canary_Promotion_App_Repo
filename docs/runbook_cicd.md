@@ -23,7 +23,7 @@
 | frontend-build-npm   | npm run build                              | Build React production assets | \*     |
 | frontend-build-image | docker build                               | Build frontend image          |        |
 | dependency-scan      | mvn org.owasp:dependency-check-maven:check | dependency check              | \*     |
-| smoke-test           | docker compose                             | smoke-test                    |        |
+| integration test           | docker compose                             | integration test                    |        |
 | image-scan           | trivy image scan                           | image scan                    |        |
 | image-push           | docker push                                | image push                    |        |
 | notify-slack         | slack                                      | slack notification            | \*     |
@@ -89,7 +89,7 @@
     - frontend-build-image
   - parallel
     - dependency-scan
-    - ci-smoke-test: ci-test/docker-compose.yaml
+    - ci-integration test: ci-test/docker-compose.yaml
     - backend-image-scan: use image built in preivous job
     - frontend-image-scan: use image built in preivous job
   - parallel
