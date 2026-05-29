@@ -36,8 +36,8 @@ permissions:
 
 env:
   source-tag-prefix: main
-  backend-image-name: gitops-backend-image 
-  frontend-image-name: gitops-frontend-image
+  backend-image-name: gitops-risk-control-backend 
+  frontend-image-name: gitops-risk-control-frontend
   platform-repo: simonangel-fong/Project_GitOps_Risk_Control_Platform_Repo
 
 jobs:
