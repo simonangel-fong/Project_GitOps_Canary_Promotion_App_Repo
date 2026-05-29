@@ -217,8 +217,8 @@ server {
 
 ```sh
 cd frontend
-docker build -t simonangelfong/gitops-demo-frontend .
-docker run --rm -d --name gitops-frontend -p 8000:8080 simonangelfong/gitops-demo-frontend
+docker build -t simonangelfong/gitops-risk-control-frontend .
+docker run --rm -d --name gitops-frontend -p 8000:8080 simonangelfong/gitops-risk-control-frontend
 
 curl -i http://localhost:8000
 curl -i http://localhost:8000/healthz
@@ -294,8 +294,8 @@ npm run build
 
 # image-scan
 cd frontend
-docker build -t simonangelfong/gitops-demo-frontend .
-trivy image simonangelfong/gitops-demo-frontend
+docker build -t simonangelfong/gitops-risk-control-frontend .
+trivy image simonangelfong/gitops-risk-control-frontend
 
 
 
@@ -304,6 +304,6 @@ docker build -t simonangelfong/gitops-risk-control-backend .
 docker push simonangelfong/gitops-risk-control-backend
 
 cd frontend/
-docker build -t simonangelfong/gitops-demo-frontend .
-docker push simonangelfong/gitops-demo-frontend
+docker build -t simonangelfong/gitops-risk-control-frontend .
+docker push simonangelfong/gitops-risk-control-frontend
 ```

@@ -24,7 +24,7 @@ env:
   backend-image-name: gitops-risk-control-backend
   backend-image-tag: main
   frontend-dockerfile-path: frontend
-  frontend-image-name: gitops-demo-frontend
+  frontend-image-name: gitops-risk-control-frontend
   frontend-image-tag: main
   docker-compose-path: ci-test
 

@@ -22,7 +22,7 @@ permissions:
 
 env:
   frontend-dockerfile-path: frontend
-  frontend-image-name: gitops-demo-frontend
+  frontend-image-name: gitops-risk-control-frontend
   frontend-image-tag: pr
 
 jobs:
