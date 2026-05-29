@@ -8,8 +8,8 @@ services:
       PGDB_ENABLE: ${PGDB_ENABLE:-false}
       # PGDB_ENABLE: ${PGDB_ENABLE:-true}
       PGDB_URL: ${PGDB_URL:-jdbc:postgresql://postgres:5432/demo_db}
-      OOM_ENABLE: ${OOM_ENABLE:-false}
-      # OOM_ENABLE: ${OOM_ENABLE:-true}
+      # OOM_ENABLE: ${OOM_ENABLE:-false}
+      OOM_ENABLE: ${OOM_ENABLE:-true}
       # OOM_TIME: ${OOM_TIME:-0}
       OOM_TIME: ${OOM_TIME:-1}
     ports:

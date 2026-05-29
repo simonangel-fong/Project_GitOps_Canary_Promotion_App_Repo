@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitops-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gitops-backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gitops-backend
+    spec:
+      # serviceAccountName: gitops-backend
+      containers:
+        - name: gitops-backend
+          image: simonangelfong/gitops-demo-backend:v0.3.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: BACKEND_VERSION
+              value: "0.1.0"
+            - name: FRONTEND_BG_COLOR
+              value: "blue"
+            - name: PGDB_ENABLE
+              value: "false"
+            - name: PGDB_URL
+              value: "jdbc:postgresql://postgres:5432/demo_db"
+            - name: OOM_ENABLE
+              # value: "false"
+              value: "true"
+            - name: OOM_TIME
+              value: "1"
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
